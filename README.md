@@ -1,40 +1,45 @@
 # OpenTax
-Open-source US tax prep. 100% local, print-and-mail, no e-file, no network, no LLM for the user.
+Free, open-source US tax prep software.
 
-> **SKELETON / PROOF OF CONCEPT.** All numbers in `constants.py` are PLACEHOLDER
-> zeros. Do **not** file anything from this. Fill real values from official IRS
-> PDFs in `years/2025/federal/source_pdfs/` first. See `CLAUDE.md` for the rules.
+For now, this program is meant to run 100% locally, for print-and-file tax preparation. These might change if this software becomes more widely used but for now I'm focusing on a working proof-of-concept.
+  * IRS MeF e-filing requires becoming an Authorized IRS e-file Provider (Pub 3112, pass ATS, EFIN, Pub 1345/4164).
+  * No data is received or stored on any server, as this will trigger tax-preparer (PTIN) and FTC Safeguards Rule (GLBA) obligations.
 
-## Run
-```bash
-python3 cli.py demo        # end-to-end pipeline on sample inputs
-python3 -m pytest -q       # engine + form-wiring tests (6 pass)
-```
+**DISCLAIMER**: I am not a licensed tax preparer. I am doing this for fun.
 
-## Layout
-```
-engine/                tax-agnostic core (never changes per year)
-  money.py             Decimal, whole-dollar, half-up. fail-loud need()/Missing
-  form.py              Form + Ctx (upstream line reads)
-  solver.py            topo-sort by depends_on, run each form once
-  registry.py          form modules register here
-years/2025/federal/
-  constants.py         DATA ONLY — brackets, std deduction, phaseouts (PLACEHOLDER)
-  forms/               f1040, sch1, sch8812, sch_eic  (compute(inp, ctx) -> lines)
-  pdf_maps/f1040.json  line_id -> pdf acroform field
-  source_pdfs/         drop IRS blank + INSTRUCTION PDFs here
-  tests/               engine tests + Pub-1436 case templates
-ui/                    ingest -> parsers -> review -> fill_pdf  (one inputs dict in,
-                       one solution dict out; parsers never feed compute directly)
-cli.py                 local pipeline driver
-```
+# User Instructions
+## Installation
+(TODO)
 
-## Pipeline
-`ingest → parse → confirm/edit → compute → review/override → fill PDF`.
-Each stage is its own module; user can stop and edit at any stage.
+## Usage
+1. Drag and drop your PDFs forms into the [???]
+2. The program will parse the PDFs. Make sure to manually review the numbers and edit if necessary!
+3. The program will auto-populate your output forms. Make sure to manually review the proposals and edit if necessary!
+4. The output forms will be printed as a PDF. Print, sign, and file accordingly.
 
-## Next steps (one form at a time, with its instruction PDF)
-1. Drop IRS f1040 + instruction PDFs into `source_pdfs/`.
-2. Fill `constants.py` numbers FROM the PDF (never from memory).
-3. Fill expected values in `tests/cases/*.json` from IRS Pub 1436; tests assert exact.
-4. Wire real parsers (`ui/parsers/`) and PDF stamping (`ui/fill_pdf.py` needs pypdf).
+# LIMITATIONS
+We're working on it! Currently this software only supports:
+* // INCOMPLETE
+
+On our to-do list:
+* Priority 1
+  * Federal
+    * W2
+    * 1099-INT
+    * 1040
+    * Standard deduction
+    * Filing statuses: single, married jointly, married separately / qualifying surviving spouse, HOH
+    * Credits: EITC (Schedule EIC + worksheet), CTC/ACTC (Schedule 8812).
+* Priority 2
+  * Federal
+    * schedule A, itemized deductions
+    * schedule C
+    * schedule D + 8949
+    * rental
+    * K1
+    * AMT
+* Priority 3
+  * state returns
+
+# Want to contribute?
+See [DEVELOPMENT.md](https://github.com/imaqt314/OpenTax/blob/main/DEVELOPMENT.md)
