@@ -9,7 +9,6 @@ from engine.form import Form
 
 # federal v1 form modules (dotted paths). order irrelevant — solver topo-sorts.
 FEDERAL_2025 = [
-    "years.2025.federal.forms.sch1",
     "years.2025.federal.forms.sch_eic",
     "years.2025.federal.forms.sch8812",
     "years.2025.federal.forms.f1040",

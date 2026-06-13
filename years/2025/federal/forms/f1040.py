@@ -1,28 +1,43 @@
 """Form 1040. main cascade. reads schedules via ctx, numbers from constants.
 
-SKELETON: line cascade wired per 1040 layout, but constants are PLACEHOLDER.
-do NOT trust output numbers until constants are filled from source_pdfs and
-tests pass exact (core principle 3, test harness rule).
+v1 income: W-2 wages (line 1a) + 1099-INT taxable interest (line 2b). No
+Schedule 1. Credits (CTC line 19, EITC line 27, ACTC line 28) come from their
+schedules — those schedules are still being built; f1040's own cascade is real.
 """
 from engine.money import money, need
 
 from .. import constants as C
 
 ID = "f1040"
-DEPENDS_ON = ["sch1", "sch8812", "sch_eic"]
+DEPENDS_ON = ["sch8812", "sch_eic"]
 
 
-def tax_from_brackets(taxable: int, status: str) -> int:
-    """progressive tax from constants.BRACKETS. PLACEHOLDER method — real
-    returns for taxable < $100k must use the IRS Tax Tables, not a formula."""
+def _bracket_tax(amount: int, status: str) -> float:
+    """exact progressive tax from constants.BRACKETS. tiers = (lower, rate);
+    a tier runs [lower, next_lower). this IS the Tax Computation Worksheet."""
     tiers = C.BRACKETS[status]
     tax = 0.0
     for i, (lo, rate) in enumerate(tiers):
+        if amount <= lo:
+            break
         hi = tiers[i + 1][0] if i + 1 < len(tiers) else None
-        if taxable > lo:
-            top = taxable if hi is None else min(taxable, hi)
-            tax += (top - lo) * rate
-    return money(tax)
+        top = amount if hi is None else min(amount, hi)
+        tax += (top - lo) * rate
+    return tax
+
+
+def tax_line16(taxable: int, status: str) -> int:
+    """1040 line 16 tax.
+    < $100,000  -> Tax Table: tax on the midpoint of the $50 income row.
+    >= $100,000 -> Tax Computation Worksheet: formula on exact taxable income.
+    TODO: sub-$3,000 table rows use smaller increments; validate vs the Tax
+    Table pages in source_pdfs before trusting very-low-income returns."""
+    if taxable <= 0:
+        return 0
+    if taxable < 100000:
+        midpoint = (taxable // 50) * 50 + 25
+        return money(_bracket_tax(midpoint, status))
+    return money(_bracket_tax(taxable, status))
 
 
 def compute(inp, ctx):
@@ -31,23 +46,44 @@ def compute(inp, ctx):
         raise ValueError(f"unknown filing_status {fs!r}")
 
     L = {}
-    L["1a"] = money(need(inp, "w2_wages"))         # W-2 box 1 sum
-    L["8"] = ctx.get("sch1", "10")                 # additional income (Sch 1)
-    L["9"] = money(L["1a"] + L["8"])               # total income
-    L["11"] = L["9"]                               # AGI (no adjustments in v1)
-    L["12"] = C.STD_DEDUCTION[fs]                  # std deduction, from constants
-    L["15"] = money(max(0, L["11"] - L["12"]))     # taxable income
-    L["16"] = tax_from_brackets(L["15"], fs)       # tax
-    L["19"] = ctx.get("sch8812", "ctc")            # child tax credit
-    L["22"] = money(max(0, L["16"] - L["19"]))     # tax after CTC
-    L["24"] = L["22"]                              # total tax (v1: no other taxes)
-    L["25a"] = money(need(inp, "w2_withholding"))  # W-2 box 2 fed withholding
-    L["27"] = ctx.get("sch_eic", "eitc")           # EITC
-    L["33"] = money(L["25a"] + L["27"])            # total payments
+    # --- income ---
+    L["1a"] = money(need(inp, "w2_wages"))          # W-2 box 1 wages (sum)
+    L["1z"] = L["1a"]                               # total wages (v1: box 1 only)
+    L["2b"] = money(need(inp, "interest_income"))   # taxable interest (1099-INT)
+    L["9"] = money(L["1z"] + L["2b"])               # total income
+    L["10"] = 0                                     # adjustments (Sch 1) — none in v1
+    L["11"] = money(L["9"] - L["10"])               # adjusted gross income
+
+    # --- deduction & taxable income ---
+    L["12"] = C.STD_DEDUCTION[fs]                   # standard deduction
+    L["15"] = money(max(0, L["11"] - L["12"]))      # taxable income
+
+    # --- tax ---
+    L["16"] = tax_line16(L["15"], fs)               # tax
+    L["17"] = 0                                     # Schedule 2 line 3 — none in v1
+    L["18"] = money(L["16"] + L["17"])
+    L["19"] = ctx.get("sch8812", "ctc")             # child tax credit / ODC
+    L["20"] = 0                                     # Schedule 3 line 8 — none in v1
+    L["21"] = money(L["19"] + L["20"])
+    L["22"] = money(max(0, L["18"] - L["21"]))      # tax after nonrefundable credits
+    L["23"] = 0                                     # Schedule 2 line 21 — none in v1
+    L["24"] = money(L["22"] + L["23"])              # total tax
+
+    # --- payments ---
+    L["25a"] = money(need(inp, "w2_withholding"))   # W-2 box 2 federal withholding
+    L["25d"] = L["25a"]                             # total withholding
+    L["26"] = 0                                     # estimated payments — none in v1
+    L["27"] = ctx.get("sch_eic", "eitc")            # earned income credit
+    L["28"] = ctx.get("sch8812", "actc")            # additional CTC (refundable)
+    L["31"] = 0                                     # Schedule 3 line 13 — none in v1
+    L["32"] = money(L["27"] + L["28"] + L["31"])    # total other payments & refundable credits
+    L["33"] = money(L["25d"] + L["26"] + L["32"])   # total payments
+
+    # --- refund / owe ---
     if L["33"] >= L["24"]:
-        L["34"] = money(L["33"] - L["24"])         # overpayment / refund
+        L["34"] = money(L["33"] - L["24"])          # overpayment / refund
         L["37"] = 0
     else:
         L["34"] = 0
-        L["37"] = money(L["24"] - L["33"])         # amount you owe
+        L["37"] = money(L["24"] - L["33"])          # amount you owe
     return L

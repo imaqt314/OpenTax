@@ -1,0 +1,22 @@
+{
+  "_note": "Ground truth for the f1040 core, formula (>=100k) tax path. taxable 150000 single -> tax 28847 (Tax Computation Worksheet, hand-computable). std deduction 15750 (verify vs IRS 1040 instr). lines 34/37 (refund/owe) are null until #2 — the EITC stub still emits a bogus flat credit; fill once Schedule EIC has real phaseout logic.",
+  "inputs": {
+    "filing_status": "single",
+    "w2_wages": 165750,
+    "w2_withholding": 30000,
+    "interest_income": 0,
+    "num_qualifying_children": 0
+  },
+  "expect": {
+    "f1040": {
+      "9": 165750,
+      "11": 165750,
+      "12": 15750,
+      "15": 150000,
+      "16": 28847,
+      "24": 28847,
+      "34": null,
+      "37": null
+    }
+  }
+}

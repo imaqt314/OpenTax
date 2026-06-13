@@ -1,9 +1,9 @@
-"""Schedule 1 — Additional Income & Adjustments. v1 SKELETON.
+"""Schedule 1 — Additional Income & Adjustments. NOT IN v1. FUTURE STUB.
 
-v1 channel: taxable interest (1099-INT). carries to 1040 line 8.
-NOTE: on the real 1040, 1099-INT taxable interest lands on line 2b, not Sch1.
-this wires the additional-income path per the project example; revise placement
-against the real 1040 / Schedule 1 instructions before trust.
+v1 income (W-2 wages, 1099-INT interest) goes straight onto the 1040 — wages on
+line 1a, taxable interest on line 2b. 1099-INT interest does NOT belong here.
+Schedule 1 is for OTHER income (unemployment, business via Sch C, etc.) and
+above-the-line adjustments — add those later. Not registered in FEDERAL_2025.
 """
 from engine.money import money, need
 
@@ -13,6 +13,6 @@ DEPENDS_ON: list = []
 
 def compute(inp, ctx):
     L = {}
-    interest = need(inp, "interest_income")     # 1099-INT box 1 sum
-    L["10"] = money(interest)                    # total additional income -> 1040 L8
+    # placeholder for future additional income -> 1040 line 8, adjustments -> line 10.
+    L["10"] = money(need(inp, "additional_income"))
     return L
