@@ -1,0 +1,18 @@
+{
+  "_note": "PLACEHOLDER acroform field names. extract real names from the IRS f1040.pdf in source_pdfs (e.g. `pdftk f1040.pdf dump_data_fields` or pypdf). map = line_id -> pdf field name.",
+  "1a": "f1_01",
+  "8": "f1_08",
+  "9": "f1_09",
+  "11": "f1_11",
+  "12": "f1_12",
+  "15": "f1_15",
+  "16": "f1_16",
+  "19": "f1_19",
+  "22": "f1_22",
+  "24": "f1_24",
+  "25a": "f1_25a",
+  "27": "f1_27",
+  "33": "f1_33",
+  "34": "f1_34",
+  "37": "f1_37"
+}

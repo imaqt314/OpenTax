@@ -1,0 +1,19 @@
+{
+  "_note": "TEMPLATE. expected values are null = TODO. fill from IRS Pub 1436 e-file test scenarios (or diff vs OpenTaxSolver/UsTaxes), then the runner asserts EXACT match. nulls are skipped until filled — never assert a guessed number.",
+  "inputs": {
+    "filing_status": "single",
+    "w2_wages": 50000,
+    "w2_withholding": 6000,
+    "interest_income": 320,
+    "num_qualifying_children": 2
+  },
+  "expect": {
+    "f1040": {
+      "9": 50320,
+      "12": null,
+      "15": null,
+      "16": null,
+      "27": null
+    }
+  }
+}
