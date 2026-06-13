@@ -1,8 +1,12 @@
 """Form 1040. main cascade. reads schedules via ctx, numbers from constants.
 
 v1 income: W-2 wages (line 1a) + 1099-INT taxable interest (line 2b). No
-Schedule 1. Credits (CTC line 19, EITC line 27, ACTC line 28) come from their
+Schedule 1. Credits (CTC line 19, EITC line 27a, ACTC line 28) come from their
 schedules — those schedules are still being built; f1040's own cascade is real.
+
+2025 redesign line IDs (verified against the blank PDF in source_pdfs, NOT
+memory): AGI = 11a (pg1) carried to 11b (pg2); standard deduction = 12e;
+total deductions = 14 (12e+13a+13b); taxable income = 15; EIC = 27a.
 """
 from engine.money import money, need
 
@@ -46,17 +50,21 @@ def compute(inp, ctx):
         raise ValueError(f"unknown filing_status {fs!r}")
 
     L = {}
-    # --- income ---
+    # --- income (page 1) ---
     L["1a"] = money(need(inp, "w2_wages"))          # W-2 box 1 wages (sum)
-    L["1z"] = L["1a"]                               # total wages (v1: box 1 only)
+    L["1z"] = L["1a"]                               # add 1a-1h (v1: box 1 only)
     L["2b"] = money(need(inp, "interest_income"))   # taxable interest (1099-INT)
-    L["9"] = money(L["1z"] + L["2b"])               # total income
+    L["9"] = money(L["1z"] + L["2b"])               # total income (1z+2b+3b+...+8)
     L["10"] = 0                                     # adjustments (Sch 1) — none in v1
-    L["11"] = money(L["9"] - L["10"])               # adjusted gross income
+    L["11a"] = money(L["9"] - L["10"])              # adjusted gross income
 
-    # --- deduction & taxable income ---
-    L["12"] = C.STD_DEDUCTION[fs]                   # standard deduction
-    L["15"] = money(max(0, L["11"] - L["12"]))      # taxable income
+    # --- deduction & taxable income (page 2) ---
+    L["11b"] = L["11a"]                             # AGI carried to page 2
+    L["12e"] = C.STD_DEDUCTION[fs]                  # standard / itemized deduction
+    L["13a"] = 0                                    # QBI deduction (8995) — none in v1
+    L["13b"] = 0                                    # additional deductions (Sch 1-A) — none in v1
+    L["14"] = money(L["12e"] + L["13a"] + L["13b"]) # total deductions
+    L["15"] = money(max(0, L["11b"] - L["14"]))     # taxable income
 
     # --- tax ---
     L["16"] = tax_line16(L["15"], fs)               # tax
@@ -71,12 +79,11 @@ def compute(inp, ctx):
 
     # --- payments ---
     L["25a"] = money(need(inp, "w2_withholding"))   # W-2 box 2 federal withholding
-    L["25d"] = L["25a"]                             # total withholding
+    L["25d"] = L["25a"]                             # total withholding (25a+25b+25c)
     L["26"] = 0                                     # estimated payments — none in v1
-    L["27"] = ctx.get("sch_eic", "eitc")            # earned income credit
+    L["27a"] = ctx.get("sch_eic", "eitc")           # earned income credit (EIC)
     L["28"] = ctx.get("sch8812", "actc")            # additional CTC (refundable)
-    L["31"] = 0                                     # Schedule 3 line 13 — none in v1
-    L["32"] = money(L["27"] + L["28"] + L["31"])    # total other payments & refundable credits
+    L["32"] = money(L["27a"] + L["28"])             # total other payments & refundable credits (+29,30,31=0)
     L["33"] = money(L["25d"] + L["26"] + L["32"])   # total payments
 
     # --- refund / owe ---

@@ -7,7 +7,7 @@ import sys
 
 from engine.registry import FEDERAL_2025, load
 from engine.solver import run
-from ui.fill_pdf import field_values
+from ui.fill_pdf import fill
 from ui.parsers import f1099int, w2
 from ui.review import low_confidence, to_inputs
 
@@ -19,6 +19,8 @@ BANNER = (
 )
 
 PDF_MAP = "years/2025/federal/pdf_maps/f1040.json"
+BLANK_PDF = "years/2025/federal/source_pdfs/f1040.pdf"
+OUT_PDF = "out/f1040_filled.pdf"
 
 
 def demo():
@@ -46,10 +48,10 @@ def demo():
     for line, val in sol["f1040"].items():
         print(f"  line {line:>4}: {val}")
 
-    # stage f: build pdf field map (stamp() raises until real PDF wired).
-    fields = field_values(sol["f1040"], PDF_MAP)
-    print("\npdf field map (first 5):", dict(list(fields.items())[:5]))
-    print("\nNOTE: placeholder numbers. do not file.")
+    # stage f: stamp the filled 1040 PDF.
+    out = fill(sol["f1040"], BLANK_PDF, PDF_MAP, OUT_PDF)
+    print(f"\nfilled PDF written: {out}")
+    print("NOTE: placeholder numbers. do not file.")
 
 
 def main(argv):

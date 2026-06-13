@@ -57,8 +57,8 @@ def test_f1040_cascade_wiring():
     assert L["1a"] == BASE_INPUTS["w2_wages"]           # wages -> 1a
     assert L["2b"] == BASE_INPUTS["interest_income"]    # interest -> 2b (not Sch 1)
     assert L["9"] == L["1z"] + L["2b"]                  # total income
-    assert L["11"] == L["9"] - L["10"]                  # AGI
-    assert L["15"] == max(0, L["11"] - L["12"])         # taxable income
+    assert L["11a"] == L["9"] - L["10"]                 # AGI (2025: line 11a)
+    assert L["15"] == max(0, L["11b"] - L["14"])        # taxable income (11b - total deductions)
     assert L["24"] == L["22"] + L["23"]                 # total tax
     assert L["33"] == L["25d"] + L["26"] + L["32"]      # total payments
     # never both a refund and a balance due
