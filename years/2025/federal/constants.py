@@ -1,22 +1,15 @@
 """2025 federal constants. DATA ONLY. no logic.
-
-==============================================================================
-WARNING: EVERY number below is a PLACEHOLDER. core principle 3: never trust
-model memory for tax numbers. pull real 2025 values from the IRS instruction
-PDFs in years/2025/federal/source_pdfs/ and fill them in. fail loud / ship no
-return rather than ship a wrong number.
-==============================================================================
 """
 
 FILING_STATUSES = ("single", "mfj", "mfs", "hoh", "qss")
 
 # TODO real 2025 standard deduction — from 1040 instructions.
 STD_DEDUCTION = {
-    "single": 0,
-    "mfj": 0,
-    "mfs": 0,
-    "hoh": 0,
-    "qss": 0,
+    "single": 15750,
+    "mfj": 31500,
+    "mfs": 15750,
+    "hoh": 23625,
+    "qss": 31500,
 }
 
 # Real 2025 brackets. each = list of (lower_bound, marginal_rate).
@@ -31,16 +24,16 @@ BRACKETS = {
 
 # --- Schedule 8812 : Child Tax Credit ---------------------------------------
 # TODO real per-child amount and phaseout thresholds — from 8812 instructions.
-CTC_PER_CHILD = 0
+CTC_PER_CHILD = 2200
 CTC_PHASEOUT_START = {
-    "single": 0,
-    "mfj": 0,
-    "mfs": 0,
-    "hoh": 0,
-    "qss": 0,
+    "single": 200000,
+    "mfj": 400000,
+    "mfs": 200000,
+    "hoh": 200000,
+    "qss": 200000,
 }
 
 # --- Schedule EIC : Earned Income Tax Credit --------------------------------
 # TODO real EITC. true value = worksheet + earned-income table + AGI and
 # investment-income limits, all in the 1040 instructions (NOT on the form).
-EITC_MAX = {0: 0, 1: 0, 2: 0, 3: 0}  # by qualifying-child count (capped at 3)
+EITC_MAX = {0: 649, 1: 4328, 2: 7152, 3: 8046}  # by qualifying-child count (capped at 3)
